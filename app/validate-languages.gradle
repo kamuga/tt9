@@ -211,6 +211,7 @@ ext.parseLanguageDefintion = { File languageFile, String dictionariesDir ->
 def validateDictionary(File dictionaryFile, String alphabet, HashMap<String, String> sounds, boolean isAlphabeticLanguage, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency) {
 	String regexSafeAlphabet = alphabet.replaceAll("([\\[\\]\\-\\.])", "")
 	final VALID_CHARS = alphabet.toUpperCase(locale) == alphabet ? "^[${regexSafeAlphabet}\\.\\-]+\$" : "^[${regexSafeAlphabet}${regexSafeAlphabet.toUpperCase(locale)}\\.\\-]+\$"
+	final boolean isEmojiLanguage = dictionaryFile.name.toLowerCase().startsWith("emoji")
 
 	int errorCount = 0
 	String errorMsg = ''
@@ -237,7 +238,7 @@ def validateDictionary(File dictionaryFile, String alphabet, HashMap<String, Str
 			errorMsg += frequencyError
 		}
 
-		def (wordErrorCount, wordErrors) = validateWord(word, VALID_CHARS, isAlphabeticLanguage, lineNumber, "Dictionary '${dictionaryFile.name}' is invalid")
+		def (wordErrorCount, wordErrors) = validateWord(word, VALID_CHARS, isAlphabeticLanguage, isEmojiLanguage, lineNumber, "Dictionary '${dictionaryFile.name}' is invalid")
 		if (wordErrorCount > 0) {
 			errorCount += wordErrorCount
 			errorMsg += wordErrors
@@ -360,7 +361,7 @@ static def validateFrequency(int frequency, int maxFrequency, String dictionaryF
 }
 
 
-static def validateWord(String word, String validCharacters, boolean isAlphabeticLanguage, int lineNumber, String errorMsgPrefix) {
+static def validateWord(String word, String validCharacters, boolean isAlphabeticLanguage, boolean isEmojiLanguage, int lineNumber, String errorMsgPrefix) {
 	int errorCount = 0
 	def errors = ''
 
@@ -369,7 +370,10 @@ static def validateWord(String word, String validCharacters, boolean isAlphabeti
 		errors += "${errorMsgPrefix}. Found numbers on line ${lineNumber}. Remove all numbers.\n"
 	}
 
-	if (word.matches("^\\P{L}+\$") && !validCharacters.contains(word)) {
+	if (
+		(isEmojiLanguage && !word.matches("^[\\p{IsEmoji}\\p{IsEmoji_Presentation}\\p{IsEmoji_Modifier}\\p{IsExtended_Pictographic}\\p{IsEmoji_Modifier_Base}\\p{IsEmoji_Component}]+\$"))
+		|| (!isEmojiLanguage && word.matches("^\\P{L}+\$") && !validCharacters.contains(word))
+	) {
 		errorCount++
 		errors += "${errorMsgPrefix}. Found a garbage word: '${word}' on line ${lineNumber}.\n"
 	}
