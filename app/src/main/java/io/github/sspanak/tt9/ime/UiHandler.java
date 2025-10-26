@@ -36,8 +36,8 @@ abstract class UiHandler extends AbstractHandler {
 	protected void initTray() {
 		mainView.getView();
 		createSuggestionBar();
-		getSuggestionOps().setDarkTheme();
-		statusBar = new StatusBar(this, settings, mainView.getView(), this::resetStatus);
+		getSuggestionOps().setColorScheme();
+		statusBar = new StatusBar(this, settings, mainView.getView(), this::resetStatus).setColorScheme();
 	}
 
 
@@ -45,10 +45,10 @@ abstract class UiHandler extends AbstractHandler {
 		if (mainView.create()) {
 			initTray();
 		} else {
-			getSuggestionOps().setDarkTheme();
+			getSuggestionOps().setColorScheme();
 		}
 		setStatusIcon(inputMode, getFinalContext().getLanguage());
-		statusBar.setText(inputMode);
+		statusBar.setColorScheme().setText(inputMode);
 		mainView.showKeyboard();
 		mainView.render();
 
